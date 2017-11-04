@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '2kmhuo3ezw&@!31(cmnu+9cr@zgb6e&@z($p73#ggb^d%cviuq'
+SECRET_KEY = '(q*2z_0-j058#b^&va+&)$v7&qnyumy#so9)g_&dgng-!g@@=7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -78,12 +78,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'NAME': 'py_django',
-        'USER': 'root',
-        'PASSWORD': '987844174',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'CHARSET': 'utf8',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
+        'CHARSET': '',
     }
 }
 
