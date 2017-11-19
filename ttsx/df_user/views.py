@@ -1,14 +1,20 @@
 # -*- coding:utf-8 -*-
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
-from models import *
-from hashlib import *
 import datetime
+from hashlib import *
+
+from django.http import JsonResponse, HttpResponseRedirect
+from django.shortcuts import render
+from user_decorators import *
+from df_goods.models import *
+
+from models import *
+
 
 # Create your views here.
 
 def register(request):
-    context = {'title': '注册'}
+    context = {'title': '注册', 'top': '1'}
+
     return render(request, 'df_user/register.html', context)
 
 def register_handle(request):
@@ -34,7 +40,7 @@ def register_handle(request):
     addr.u_email = email
     addr.save()
 
-    # return HttpResponse('ok')
+
     return HttpResponseRedirect('/user/login/')
 
 def check_name_2(request):
@@ -47,9 +53,9 @@ def check_name_2(request):
 
 def login(request):
     name = request.COOKIES.get('name', '')
-    # if name is None:
-    #     name = ''
-    context = {'title': '登陆', 'name': name}
+
+    context = {'title': '登陆', 'name': name, 'top': '1'}
+
     return render(request, 'df_user/login.html', context)
 
 def login_handle(request):
@@ -58,22 +64,22 @@ def login_handle(request):
     pwd = dict.get('userpwd')
     remember = dict.get('remember_me','0') # 1 没有这个参数 默认为0
 
-    print(remember)
+    # print(remember)
 
     # 获取有没有这个用户名,有为[obj],没有为[]
     obj = UserInfo_2.objects.filter(u_name = name)
 
-    print(obj)
-    print(name)
+    # print(obj)
+    # print(name)
 
     # if name is None:
     #     name = ''
-    context = {'name':name}
+    context = {'name':name, 'top': '1', 'title': '登陆'}
     # 用长度来判断,如果用obj == []的话,下面再用obj[0]会出现索引超出范围异常
     if len(obj) == 0:
         # 没有这个用户名
         context['name_error'] = '1'
-        print(context)
+        # print(context)
         return render(request, 'df_user/login.html', context)
     else:
         # 有这个用户名,来进行密码判断
@@ -84,7 +90,8 @@ def login_handle(request):
         print(pwd)
 
         if obj[0].u_pwd == pwd:
-            response = HttpResponseRedirect('/user/')
+            page_from = request.session.get('page_from', '/user/')
+            response = HttpResponseRedirect(page_from)
             # 密码正确
             if remember == '1':
                 # 记住用户名
@@ -99,26 +106,113 @@ def login_handle(request):
                 # 不记住用户名
                 response.delete_cookie('name')
 
+
+            request.session['u_id'] = obj[0].id
+            request.session['u_name'] = obj[0].u_name
+            # print(obj[0].id)
+
             return response
+
+
         else:
             # 密码错误
             context['pwd_error'] = '1'
             print(context)
             return render(request, 'df_user/login.html', context)
 
+def logout(request):
+    page_from = request.session.get('page_from', '/user/login/')
+    request.session.flush()
 
-def index(request):
-    context = {'title': '用户中心'}
-    return render(request, 'df_user/user_center_info.html', context)
+    return HttpResponseRedirect(page_from)
+
+def is_login(request):
+    # 判断用户是否登陆
+    # 获取session中的u_id，如果有，证明已登录, 没有，则说明没有登陆
+    res = request.session.get('u_id')
+    print(res)
+    if res:
+        return JsonResponse({'res': 1})
+    else:
+        return JsonResponse({'res': 0})
+
+
+@user_login
+def user(request):
+
+
+    list = UserInfo_2.objects.filter(id=request.session['u_id']) # 列表[obj, obj, ...]
+
+    # 获取list[0]的所有子表
+    # print(list[0].useraddress_2_set.all()[0].u_email)
+    # print(type(list[0].useraddress_2_set.all()[0].u_email))
+
+    email = list[0].useraddress_2_set.all()[0].u_email
+    print(email)
+
+    # 读取cookie中存取的浏览记录,并把它们填充到模板中去
+    look_list = request.COOKIES.get('look_ids', '').split(',') # str--->list
+    look_list.pop()
+    print(look_list)
+    look_list_2 = []
+    for i in look_list:
+        obj = GoodsInfo.objects.get(id=int(i))
+        look_list_2.append(obj)
+
+    context = {'title': '用户中心', 'user': list[0], 'email': email, 'look_list': look_list_2}
+
+    return render(request, 'df_user/center.html', context)
+
+@user_login
+def order(request):
+
+    context = {'title': '全部订单'}
+    return render(request, 'df_user/order.html', context)
+
+@user_login
+def site(request):
+
+    list = UserInfo_2.objects.filter(id=request.session['u_id']) # 列表 [obj, obj, ...]
+
+    user_addr = list[0].useraddress_2_set.all()
+    # print(user_addr)
+    # print(type(user_addr))
+    print(user_addr[0].u_zip)
+    print(user_addr[0].u_address)
+
+    context = {'user': list[0], 'user_addr': user_addr[0], 'title': '收货地址'}
+
+    return render(request, 'df_user/site.html', context)
+
+@user_login
+def recv_info(request):
+    # 获取要修改的这个用户对象
+    list = UserInfo_2.objects.get(id=request.session.get('u_id')) # 列表[obj, obj, ...]
+
+
+    dict = request.POST
+    name = dict.get('recv_name')
+    addr = dict.get('recv_addr')
+    zip = dict.get('recv_zip')
+    phone = dict.get('recv_phone')
+
+    print('%s,,%s,,%s,,%s'%(name, addr, zip, phone))
+
+    user_add = UserAddress_2()
+    user_add.u_info = list # 获取于这个对象关联的子表
+
+    # 为这个对象写入数据
+    list.u_phone = phone
+
+    user_add.u_get = name
+    user_add.u_address = addr
+    user_add.u_zip = zip
+
+    # 保存更改
+    user_add.save()
+    list.save()
+
+    return HttpResponseRedirect('/user/site/')
 
 def test(request):
-    return HttpResponse('ok')
-
-# def user_center_info(request):
-#     return render(request, 'df_user/user_center_info.html')
-#
-# def user_center_order(request):
-#     return render(request, 'df_user/user_center_order.html')
-#
-# def user_center_site(request):
-#     return render(request, 'df_user/user_center_site.html')
+    pass

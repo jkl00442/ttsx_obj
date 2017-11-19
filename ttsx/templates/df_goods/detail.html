@@ -1,0 +1,146 @@
+{%extends 'df_goods/base_user.html'%}
+
+{%block header%}
+	<script type="text/javascript">
+        $(function () {
+
+            $('#add_cart').click(function(){
+//                查看是否登陆
+                $.get('/user/is_login/', {}, function (data) {
+                    if(data.res==1){
+//                        把商品id,数量传过去
+                        $.get('/cart/add_cart/', {'g_id': $('.add_cart').attr('value'), 'count': $('.num_show').val()},
+                            function
+                            (data) {
+                            if(data.ok==1){
+//                                添加购物车成功，有动画
+                                var $add_x = $('#add_cart').offset().top;
+                                var $add_y = $('#add_cart').offset().left;
+
+                                var $to_x = $('#show_count').offset().top;
+                                var $to_y = $('#show_count').offset().left;
+                                $(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'});
+
+                                $(".add_jump").stop().animate({
+                                    'left': $to_y+7,
+                                    'top': $to_x+7},
+                                    "fast", function() {
+                                        $(".add_jump").fadeOut('fast',function(){
+//                                            $('#show_count').html(2);
+                                            $.get('/cart/show_count/', {}, function (data) {
+                                                $('.goods_count').html(data.count);
+
+                                            })
+                                        });
+                                });
+                            }
+                            else{
+                                alert('添加购物车失败')
+                            }
+
+                        })
+
+                    }
+                    else{
+                        location.href='/user/login/'
+                    }
+
+                })
+            });
+
+            $('.num_show').blur(function () {
+                var $num = parseInt($(this).val());
+                var $has_num = parseInt($('#has_num').val());
+
+                if($num<1){
+                    $num = 1;
+				}
+				else if($num > $has_num){
+                    $num = $has_num
+				}
+				else if(isNaN($num)){
+				    $num = 1
+				}
+                $(this).val($num);
+				var $price = parseFloat($('.show_pirze em').text());
+				var $total = $num * $price;
+				$('.total em').text($total.toFixed(2)+'元');
+
+            });
+
+            $('.add').click(function () {
+                var $count = parseInt($('.num_show').val());
+                $count++;
+                $('.num_show').val($count);
+                $('.num_show').blur();
+
+            });
+
+            $('.minus').click(function () {
+                var $count = parseInt($('.num_show').val());
+                $count--;
+                $('.num_show').val($count);
+                $('.num_show').blur();
+
+            });
+        });
+	</script>
+{%endblock header%}
+
+
+
+{%block detail%}
+	<div class="breadcrumb">
+		<a href="#">全部分类</a>
+		<span>></span>
+		<a href="/list{{type.id}}_1_1/">{{type.title}}</a>
+		<span>></span>
+		<a href="#">商品详情</a>
+	</div>
+
+	<div class="goods_detail_con clearfix">
+		<div class="goods_detail_pic fl"><img src="/static/{{goods.g_pic}}"></div>
+
+		<div class="goods_detail_list fr">
+			<h3>{{goods.g_name}}</h3>
+			<p>{{goods.g_title}}</p>
+			<div class="prize_bar">
+				<span class="show_pirze">¥<em>{{goods.g_price}}</em></span>
+				<span class="show_unit">单  位：{{goods.g_unit}}</span>
+			</div>
+			<div class="goods_num clearfix">
+				<div class="num_name fl">数 量：</div>
+				<input type="hidden" value="100" id="has_num">
+				<div class="num_add fl">
+					<input type="text" class="num_show fl" value="1">
+					<a href="javascript:;" class="add fr">+</a>
+					<a href="javascript:;" class="minus fr">-</a>
+				</div>
+			</div>
+			<div class="total">总价：<em>{{goods.g_price}}元</em></div>
+			<div class="operate_btn">
+				<a href="javascript:;" class="buy_btn">立即购买</a>
+				<a href="javascript:;" class="add_cart" id="add_cart" value="{{goods.id}}">加入购物车</a>
+			</div>
+		</div>
+	</div>
+{%endblock detail%}
+
+
+{%block right%}
+    <div class="r_wrap fr clearfix">
+			<ul class="detail_tab clearfix">
+				<li class="active">商品介绍</li>
+				<li>评论</li>
+			</ul>
+
+			<div class="tab_content">
+                {{goods.g_content|safe}}
+
+			</div>
+
+		</div>
+
+    <div class="add_jump"></div>
+{%endblock right%}
+

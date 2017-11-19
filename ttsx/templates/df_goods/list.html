@@ -1,0 +1,115 @@
+{%extends 'df_goods/base_user.html'%}
+
+{%block header%}
+<script>
+
+    $(function () {
+
+    });
+
+//    写在jquery外面
+    function add_cart(g_id) {
+//            判断用户是否登陆
+//            登陆传递商品信息
+//            未登录转到登陆页
+        $.get('/user/is_login', {}, function (data) {
+            if (data.res == 1) {
+//                用户已登陆
+                $.get('/cart/add_cart', {'g_id': g_id}, function (data) {
+                    if(data.ok){
+//                        alert('添加购物车成功')
+                        $.get('/cart/show_count/', {}, function (data) {
+                            $('.goods_count').html(data.count);
+
+                        })
+                    }
+                    else{
+                        alert('添加购物车失败')
+                    }
+                    $('.goods_count').html(data.num)
+
+                })
+            }
+            else {
+//                用户未登陆，转到登陆页
+                location.href = '/user/login';
+
+            }
+
+        });
+    }
+</script>
+{%endblock header%}
+
+{%block detail%}
+	<div class="breadcrumb">
+		<a href="#">全部分类</a>
+		<span>></span>
+		<a href="#">{{t_o.title}}</a>
+	</div>
+{%endblock detail%}
+
+
+
+{%block right%}
+    <div class="r_wrap fr clearfix">
+			<div class="sort_bar">
+				<a href="/list{{t_o.id}}_1_1" {%if order_b == 1%} class="active" {%endif%}>默认</a>
+				<a href="/list{{t_o.id}}_1_2?desc={%if desc == '1'%}0{%else%}1{%endif%}"{%if order_b == 2%}
+                   class="active"
+                   {%endif%}>价格</a>
+				<a href="/list{{t_o.id}}_1_3" {%if order_b == 3%} class="active" {%endif%}>人气</a>
+			</div>
+
+			<ul class="goods_type_list clearfix">
+                {%for i in goods_list%}
+				<li>
+					<a href="/{{i.id}}"><img src="/static/{{i.g_pic}}"></a>
+					<h4><a href="/{{i.id}}">{{i.g_name}}</a></h4>
+					<div class="operate">
+						<span class="prize">￥{{i.g_price}}</span>
+						<span class="unit">{{i.g_price}}/{{i.g_unit}}</span>
+						<!--<a href="#javascript" class="add_goods" title="加入购物车" value="{{i.id}}"></a>-->
+                        <!--<a href="javascript:add({{i.id}});" class="add_goods" title="加入购物车"></a>-->
+                        <!--<a href="javascript:add({{i.id}});" class="add_goods" title="加入购物车"></a>-->
+                        <a href="javascript:void(0);" onclick="add_cart({{i.id}})" class="add_goods" title="加入购物车"></a>
+					</div>
+				</li>
+                {%endfor%}
+			</ul>
+
+			<div class="pagenation">
+                {%if goods_list.has_previous%}
+                    <a href="/list{{t_o.id}}_1_{{order_b}}/?desc={{desc}}">首页</a>
+                    <a href="/list{{t_o.id}}_{{goods_list.number|add:-1}}_{{order_b}}/?desc={{desc}}">上一页</a>
+                {%endif%}
+
+                {%for i in goods_list.paginator.page_range%}
+
+                    <!--显示所有页码-->
+                    {%comment%}
+                        {%if i == p_index%}
+                            <a href="#" class="active">{{i}}</a>
+                        {%else%}
+                            <a href="/list{{t_o.id}}_{{i}}_{{order_b}}/?desc={{desc}}">{{i}}</a>
+                        {%endif%}
+                    {%endcomment%}
+
+
+                    <!--3,4, 5 ,6,7(页码成这种样子)-->
+                    {%if i == p_index%}
+                        <a href="#" class="active">{{i}}</a>
+                    {%elif i <= p_index|add:4 and i >= p_index|add:-4%}
+                        <a href="/list{{t_o.id}}_{{i}}_{{order_b}}/?desc={{desc}}">{{i}}</a>
+                    {%endif%}
+
+                {%endfor%}
+
+
+                {%if goods_list.has_next%}
+                    <a href="/list{{t_o.id}}_{{goods_list.number|add:1}}_{{order_b}}/?desc={{desc}}">下一页></a>
+                    <a href="/list{{t_o.id}}_{{goods_list.paginator.num_pages}}_{{order_b}}/?desc={{desc}}">末页</a>
+                {%endif%}
+			</div>
+		</div>
+{%endblock right%}
