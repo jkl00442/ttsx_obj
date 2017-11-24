@@ -77,50 +77,53 @@ def list(request, t_id, p_index, order_b):
 def detail(request, g_index):
     # 获取url匹配到的商品id
 
-    # try:
-    # 查找这个id对象,并传到模板中去
-    goods_obj = GoodsInfo.objects.get(id = int(g_index)) # 商品对象
+    try:
+        # 查找这个id对象,并传到模板中去
+        goods_obj = GoodsInfo.objects.get(id = int(g_index)) # 商品对象
 
-    # 根据这个id找到对应的分类信息
-    # type_obj = TypeInfo.objects.get(goodsinfo__id = g_index) # 分类对象
-    # 根据这个分类对象查找到最新的2件商品
-    # n_goods_list = type_obj.goodsinfo_set.order_by('-id')[:2]
+        # 根据这个id找到对应的分类信息
+        # type_obj = TypeInfo.objects.get(goodsinfo__id = g_index) # 分类对象
+        # 根据这个分类对象查找到最新的2件商品
+        # n_goods_list = type_obj.goodsinfo_set.order_by('-id')[:2]
 
-    # 或
-    # 或  根据这个id查找到对应的分类对象,并获取这个分类对象所对应的两个最新商品
-    type_obj = goods_obj.g_type
-    n_goods_list = type_obj.goodsinfo_set.order_by('-id')[:2]
+        # 或
+        # 或  根据这个id查找到对应的分类对象,并获取这个分类对象所对应的两个最新商品
+        type_obj = goods_obj.g_type
+        n_goods_list = type_obj.goodsinfo_set.order_by('-id')[:2]
 
-    # 点击量加1
-    goods_obj.g_click += 1
-    goods_obj.save()
+        # 点击量加1
+        goods_obj.g_click += 1
+        goods_obj.save()
 
-    context = {'title': '商品详情', 'top_search': '0', 'type': type_obj, 'goods': goods_obj, 'n_goods': n_goods_list}
+        context = {'title': '商品详情', 'top_search': '0', 'type': type_obj, 'goods': goods_obj, 'n_goods': n_goods_list}
 
-    response = render(request, 'df_goods/detail.html', context)
+        response = render(request, 'df_goods/detail.html', context)
 
-    # 给用户添加浏览历史
-    # 每当用户浏览商品页,给他添加一条此商品信息
-    # 先获取以后的浏览记录,浏览记录保持在5条
-    look_list = request.COOKIES.get('look_ids', '').split(',') # 对获取到的look_ids进行拆分成列表
-    print(look_list)
+        # 给用户添加浏览历史
+        # 每当用户浏览商品页,给他添加一条此商品信息
+        # 先获取以后的浏览记录,浏览记录保持在5条
+        look_list = request.COOKIES.get('look_ids', '').split(',') # 对获取到的look_ids进行拆分成列表
+        print(look_list)
+        if look_list[-1] == '':
+            look_list.pop()
+        print(look_list)
 
-    # 如果这个商品的记录重复存在,删除,并把它移到最新的位置
-    if g_index in look_list:
-        look_list.remove(g_index)
+        # 如果这个商品的记录重复存在,删除,并把它移到最新的位置
+        if g_index in look_list:
+            look_list.remove(g_index)
 
-    look_list.insert(0, g_index)
-    # 将浏览记录保持在5个
-    if len(look_list) > 5:
-        look_list.pop()
+        look_list.insert(0, g_index)
+        # 将浏览记录保持在5个
+        if len(look_list) > 5:
+            look_list.pop()
 
-    # 能根据浏览记录回到此商品页
-    response.set_cookie('look_ids', ','.join(look_list), max_age=60*60*24*7)
+        print(look_list)
+        # 能根据浏览记录回到此商品页
+        response.set_cookie('look_ids', ','.join(look_list), max_age=60*60*24*7)
 
-    return response
-    # except Exception as e:
-    #     return render(request, '404.html')
-
+        return response
+    except Exception as e:
+        return render(request, '404.html')
 
 class MySearchView(SearchView):
     """My custom search view."""

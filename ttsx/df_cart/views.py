@@ -6,35 +6,9 @@ from df_user.models import *
 from df_goods.models import GoodsInfo
 from df_user.user_decorators import *
 from django.db.models import Sum
+from df_user.user_decorators import *
 
 # Create your views here.
-# def list(request):
-#     # 获取传过来的商品id
-#     # 把用户的购物车信息保存
-#     # 返回用户购物车数量?还是说在jquery中做
-#     g_id = request.GET.get('g_id')
-#     print(g_id)
-#     goods_list = request.session.get('goods_list', [])
-#     goods_list.insert(0, g_id)
-#     print(goods_list)
-#     request.session['goods_list'] = goods_list
-#
-#     return JsonResponse({'count':len(goods_list)})
-
-# def detail(request):
-#     g_id = request.GET.get('g_id')
-#     num = request.GET.get('num')
-#
-#     goods_list = request.session.get('goods_list', [])
-#     for i in range(int(num)):
-#         goods_list.insert(0, g_id)
-#         print('111')
-#
-#     print(goods_list)
-#     request.session['goods_list'] = goods_list
-#
-#     context = {}
-#     return JsonResponse(context)
 
 def add_cart(request):
     # 获取传来的商品id,数量
@@ -82,6 +56,7 @@ def show_count(request):
     context = {'count': num}
     return JsonResponse(context)
 
+@user_login
 def index(request):
     u_id = request.session['u_id']
     obj_list = CartInfo.objects.filter(user_id = u_id)

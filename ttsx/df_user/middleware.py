@@ -18,7 +18,8 @@ class UrlMiddleware(object):
             '/cart/add_cart/',
             '/cart/show_count/',
             '/cart/',
-
+            '/cart/order/',
+            # '/order/',
         ]:
             request.session['page_from'] = request.path
 

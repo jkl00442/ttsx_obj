@@ -59,8 +59,8 @@ def order_handle(request):
                 break
 
         if ok:
-
             order.o_total = total_all
+            order.o_status = 1
             order.save()
             # 提交
             transaction.savepoint_commit(sid)

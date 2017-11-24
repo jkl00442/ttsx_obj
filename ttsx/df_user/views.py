@@ -6,6 +6,8 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from user_decorators import *
 from df_goods.models import *
+from df_order.models import *
+from django.core.paginator import Paginator
 
 from models import *
 
@@ -152,12 +154,15 @@ def user(request):
 
     # 读取cookie中存取的浏览记录,并把它们填充到模板中去
     look_list = request.COOKIES.get('look_ids', '').split(',') # str--->list
-    look_list.pop()
-    print(look_list)
     look_list_2 = []
-    for i in look_list:
-        obj = GoodsInfo.objects.get(id=int(i))
-        look_list_2.append(obj)
+    if look_list[-1] == '':
+        look_list.pop()
+
+    else:
+        for i in look_list:
+            obj = GoodsInfo.objects.get(id=int(i))
+            look_list_2.append(obj)
+
 
     context = {'title': '用户中心', 'user': list[0], 'email': email, 'look_list': look_list_2}
 
@@ -165,8 +170,28 @@ def user(request):
 
 @user_login
 def order(request):
+    p_index = request.GET.get('p_index', '1')
 
-    context = {'title': '全部订单'}
+    order_list = OrderMain.objects.filter(o_user_id=request.session.get('u_id')) #　查询用户的所有订单
+    order_page = Paginator(order_list, 2)
+    o_page = order_page.page(int(p_index))
+
+    all_page_list = []
+
+    if o_page.paginator.num_pages < 5: #　小于5页
+        all_page_list = o_page.paginator.page_range
+
+    # 大于5页
+    elif o_page.num <= 2:
+        all_page_list = range(1, 6)
+
+    elif o_page.num >= (o_page.paginator.num_pages - 1):
+        all_page_list = range((o_page.paginator.num_pages - 4), (o_page.paginator.num_pages + 1))
+
+    else:
+        all_page_list = range(o_page.number - 2, o_page.number + 2)
+
+    context = {'title': '全部订单', 'order_list': o_page, 'all_page_list': all_page_list, 'p_index': p_index}
     return render(request, 'df_user/order.html', context)
 
 @user_login
